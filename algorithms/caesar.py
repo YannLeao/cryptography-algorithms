@@ -17,4 +17,4 @@ def decrypt(text, key):
     return encrypt(text, -int(key))
 
 def generate_key():
-    return random.randint(0, 26)
+    return random.randint(0, 25)
