@@ -1,3 +1,6 @@
+import random
+
+
 def encrypt(text, key):
     shift  =  int(key)
     result = ""
@@ -12,3 +15,6 @@ def encrypt(text, key):
 
 def decrypt(text, key):
     return encrypt(text, -int(key))
+
+def generate_key():
+    return random.randint(0, 26)

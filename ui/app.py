@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
-from algorithms.caesar import encrypt as caesar_encrypt, decrypt as caesar_decrypt
-from algorithms.mono_alphabetic import encrypt as mono_alphabetic_encrypt, decrypt as mono_alphabetic_decrypt
+from algorithms.caesar import encrypt as caesar_encrypt, decrypt as caesar_decrypt, generate_key as caesar_generate
+from algorithms.mono_alphabetic import encrypt as mono_alphabetic_encrypt, decrypt as mono_alphabetic_decrypt, generate_key as mono_alphabetic_generate
 from algorithms.playfair import encrypt as playfair_encrypt, decrypt as playfair_decrypt
 from algorithms.hill import encrypt as hill_encrypt, decrypt as hill_decrypt
 
@@ -25,10 +25,24 @@ class CryptoApp(ctk.CTk):
         self.output_text = None
 
         self.algorithms = {
-            "Caesar": {"encrypt": caesar_encrypt, "decrypt": caesar_decrypt},
-            "Mono-alphabetic": {"encrypt": mono_alphabetic_encrypt, "decrypt": mono_alphabetic_decrypt},
-            "Playfair": {"encrypt": playfair_encrypt, "decrypt": playfair_decrypt},
-            "Hill": {"encrypt": hill_encrypt, "decrypt": hill_decrypt},
+            "Caesar": {
+                "encrypt": caesar_encrypt,
+                "decrypt": caesar_decrypt,
+                "generate": caesar_generate
+            },
+            "Mono-alphabetic": {
+                "encrypt": mono_alphabetic_encrypt,
+                "decrypt": mono_alphabetic_decrypt,
+                "generate": mono_alphabetic_generate
+            },
+            "Playfair": {
+                "encrypt": playfair_encrypt,
+                "decrypt": playfair_decrypt
+            },
+            "Hill": {
+                "encrypt": hill_encrypt,
+                "decrypt": hill_decrypt
+            },
         }
 
         self.create_widgets()
@@ -98,6 +112,9 @@ class CryptoApp(ctk.CTk):
         )
         self.key_entry.grid(row=1, column=0, sticky="ew")
 
+        generate_btn = ctk.CTkButton(key_container, text="Generate Key", command=self.generate_key)
+        generate_btn.grid(row=1, column=1, pady=10)
+
         # Buttons
         button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
         button_frame.grid(row=5, column=0, pady=10)
@@ -140,6 +157,10 @@ class CryptoApp(ctk.CTk):
         self.output_text.insert("1.0", str(text))
         self.output_text.configure(state="disabled")
 
+    def set_key_entry(self, key):
+        self.key_entry.delete(0, "end")
+        self.key_entry.insert(0, str(key))
+
     def swap_text(self):
         input_text = self.input_text.get("1.0", "end").strip()
         output_text = self.output_text.get("1.0", "end").strip()
@@ -177,5 +198,19 @@ class CryptoApp(ctk.CTk):
         try:
             result = algo["decrypt"](text, key)
             self.set_output(result)
+        except Exception as e:
+            self.set_output(f"Error: {str(e)}")
+
+    def generate_key(self):
+        algorithm = self.algorithm_menu.get()
+        algo = self.algorithms.get(algorithm)
+
+        if algo is None:
+            self.set_output("Algorithm not yet implemented")
+            return
+
+        try:
+            key = algo["generate"]()
+            self.set_key_entry(key)
         except Exception as e:
             self.set_output(f"Error: {str(e)}")
