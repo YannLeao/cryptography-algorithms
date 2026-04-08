@@ -4,3 +4,6 @@ def encrypt(text, key):
 
 def decrypt(text, key):
     pass
+
+def generate_key():
+    pass
