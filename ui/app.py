@@ -1,6 +1,9 @@
 import customtkinter as ctk
 
 from algorithms.caesar import encrypt as caesar_encrypt, decrypt as caesar_decrypt
+from algorithms.mono_alphabetic import encrypt as mono_alphabetic_encrypt, decrypt as mono_alphabetic_decrypt
+from algorithms.playfair import encrypt as playfair_encrypt, decrypt as playfair_decrypt
+from algorithms.hill import encrypt as hill_encrypt, decrypt as hill_decrypt
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -16,17 +19,19 @@ class CryptoApp(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.create_widgets()
+        self.algorithm_menu = None
+        self.input_text = None
+        self.key_entry = None
+        self.output_text = None
 
         self.algorithms = {
-            "Caesar": {
-                "encrypt": caesar_encrypt,
-                "decrypt": caesar_decrypt
-            },
-            "Mono-alphabetic": None,
-            "Playfair": None,
-            "Hill": None,
+            "Caesar": {"encrypt": caesar_encrypt, "decrypt": caesar_decrypt},
+            "Mono-alphabetic": {"encrypt": mono_alphabetic_encrypt, "decrypt": mono_alphabetic_decrypt},
+            "Playfair": {"encrypt": playfair_encrypt, "decrypt": playfair_decrypt},
+            "Hill": {"encrypt": hill_encrypt, "decrypt": hill_decrypt},
         }
+
+        self.create_widgets()
 
     def create_widgets(self):
         # Main frame
@@ -51,16 +56,50 @@ class CryptoApp(ctk.CTk):
         self.algorithm_menu.grid(row=1, column=0, pady=10)
 
         # Input text field
-        ctk.CTkLabel(main_frame, text="Input text").grid(row=2, column=0, pady=10)
-        self.input_text = ctk.CTkTextbox(main_frame, height=120)
-        self.input_text.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
+        input_container = ctk.CTkFrame(main_frame, fg_color="transparent")
+        input_container.grid(row=2, column=0, sticky="ew", padx=10)
+        input_container.grid_columnconfigure(0, weight=1)
+
+        input_label = ctk.CTkLabel(
+            input_container,
+            text="Input Text",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            anchor="w",
+            text_color="#2ecc71"
+        )
+        input_label.grid(row=0, column=0, sticky="w", pady=(0, 5))
+
+        self.input_text = ctk.CTkTextbox(
+            input_container,
+            height=120,
+            corner_radius=10,
+            border_width=2
+        )
+        self.input_text.grid(row=1, column=0, sticky="ew")
 
         # Key field
-        self.key_entry = ctk.CTkEntry(main_frame, placeholder_text="Enter the key")
-        self.key_entry.grid(row=4, column=0, padx=10, pady=10, sticky="ew")
+        key_container = ctk.CTkFrame(main_frame, fg_color="transparent")
+        key_container.grid(row=4, column=0, sticky="ew", padx=10, pady=(10, 5))
+        key_container.grid_columnconfigure(0, weight=1)
+
+        key_label = ctk.CTkLabel(
+            key_container,
+            text="Key",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            anchor="w",
+            text_color="#2ecc71"
+        )
+        key_label.grid(row=0, column=0, sticky="w", pady=(0, 5))
+
+        self.key_entry = ctk.CTkEntry(
+            key_container,
+            placeholder_text="Enter the encryption key",
+            corner_radius=10
+        )
+        self.key_entry.grid(row=1, column=0, sticky="ew")
 
         # Buttons
-        button_frame = ctk.CTkFrame(main_frame)
+        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
         button_frame.grid(row=5, column=0, pady=10)
 
         encrypt_btn = ctk.CTkButton(button_frame, text="Encrypt", command=self.encrypt)
@@ -73,14 +112,32 @@ class CryptoApp(ctk.CTk):
         swap_btn.grid(row=0, column=2, padx=5)
 
         # Output text field
-        ctk.CTkLabel(main_frame, text="Result").grid(row=6, column=0, pady=10)
-        self.output_text = ctk.CTkTextbox(main_frame, height=120, state="disabled")
-        self.output_text.grid(row=7, column=0, padx=10, pady=10, sticky="ew")
+        output_container = ctk.CTkFrame(main_frame, fg_color="transparent")
+        output_container.grid(row=6, column=0, sticky="ew", padx=10, pady=(10, 0))
+        output_container.grid_columnconfigure(0, weight=1)
+
+        output_label = ctk.CTkLabel(
+            output_container,
+            text="Result",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            anchor="w",
+            text_color="#2ecc71"
+        )
+        output_label.grid(row=0, column=0, sticky="w", pady=(0, 5))
+
+        self.output_text = ctk.CTkTextbox(
+            output_container,
+            height=120,
+            state="disabled",
+            corner_radius=10,
+            border_width=2,
+        )
+        self.output_text.grid(row=1, column=0, sticky="ew")
 
     def set_output(self, text):
         self.output_text.configure(state="normal")
         self.output_text.delete("1.0", "end")
-        self.output_text.insert("1.0", text)
+        self.output_text.insert("1.0", str(text))
         self.output_text.configure(state="disabled")
 
     def swap_text(self):
