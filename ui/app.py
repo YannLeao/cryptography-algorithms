@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from config import ALGORITHMS
+from ui.handlers import encrypt, decrypt, generate_key
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -11,15 +12,20 @@ class CryptoApp(ctk.CTk):
         super().__init__(**kwargs)
 
         self.title("Crypto Algorithms")
-        self.geometry("900x600")
+        self.geometry("900x700")
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
         self.algorithm_menu = None
         self.input_text = None
-        self.key_entry = None
+        self.key_frame = None
         self.output_text = None
+        self.matrix_container = None
+        self.matrix_size = None
+        self.key_entry = None
+        self.key_dynamic = None
+        self.matrix_entries = None
 
         self.algorithms = ALGORITHMS
 
@@ -27,7 +33,11 @@ class CryptoApp(ctk.CTk):
 
     def create_widgets(self):
         # Main frame
-        main_frame = ctk.CTkFrame(self, corner_radius=15)
+        main_frame = ctk.CTkScrollableFrame(
+            self,
+            corner_radius=15,
+            height=550
+        )
         main_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
         main_frame.grid_columnconfigure(0, weight=1)
 
@@ -43,9 +53,10 @@ class CryptoApp(ctk.CTk):
         # Algorithm selection
         self.algorithm_menu = ctk.CTkOptionMenu(
             main_frame,
-            values=["Caesar", "Mono-alphabetic", "Playfair", "Hill"]
+            values=list(ALGORITHMS.keys())
         )
         self.algorithm_menu.grid(row=1, column=0, pady=10)
+        self.algorithm_menu.configure(command=self.on_algorithm_change)
 
         # Input text field
         input_container = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -70,12 +81,12 @@ class CryptoApp(ctk.CTk):
         self.input_text.grid(row=1, column=0, sticky="ew")
 
         # Key field
-        key_container = ctk.CTkFrame(main_frame, fg_color="transparent")
-        key_container.grid(row=4, column=0, sticky="ew", padx=10, pady=(10, 5))
-        key_container.grid_columnconfigure(0, weight=1)
+        self.key_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        self.key_frame.grid(row=4, column=0, sticky="ew", padx=10, pady=(10, 5))
+        self.key_frame.grid_columnconfigure(0, weight=1)
 
         key_label = ctk.CTkLabel(
-            key_container,
+            self.key_frame,
             text="Key",
             font=ctk.CTkFont(size=16, weight="bold"),
             anchor="w",
@@ -83,24 +94,27 @@ class CryptoApp(ctk.CTk):
         )
         key_label.grid(row=0, column=0, sticky="w", pady=(0, 5))
 
+        self.key_dynamic = ctk.CTkFrame(self.key_frame, fg_color="transparent")
+        self.key_dynamic.grid(row=1, column=0, sticky="ew")
+
         self.key_entry = ctk.CTkEntry(
-            key_container,
+            self.key_dynamic,
             placeholder_text="Enter the encryption key",
             corner_radius=10
         )
-        self.key_entry.grid(row=1, column=0, sticky="ew")
+        self.key_entry.pack(fill="x")
 
-        generate_btn = ctk.CTkButton(key_container, text="Generate Key", command=self.generate_key)
-        generate_btn.grid(row=1, column=1, pady=10)
+        generate_btn = ctk.CTkButton(self.key_frame, text="Generate Key", command=lambda: generate_key(self))
+        generate_btn.grid(row=2, column=0, pady=10)
 
         # Buttons
         button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
         button_frame.grid(row=5, column=0, pady=10)
 
-        encrypt_btn = ctk.CTkButton(button_frame, text="Encrypt", command=self.encrypt)
+        encrypt_btn = ctk.CTkButton(button_frame, text="Encrypt", command=lambda: encrypt(self))
         encrypt_btn.grid(row=0, column=0, padx=10)
 
-        decrypt_btn = ctk.CTkButton(button_frame, text="Decrypt", command=self.decrypt)
+        decrypt_btn = ctk.CTkButton(button_frame, text="Decrypt", command=lambda: decrypt(self))
         decrypt_btn.grid(row=0, column=1, padx=10)
 
         swap_btn = ctk.CTkButton(button_frame, text="⇄", width=40, command=self.swap_text)
@@ -146,48 +160,75 @@ class CryptoApp(ctk.CTk):
         self.input_text.insert("1.0", output_text)
         self.set_output("")
 
-    def encrypt(self):
-        text = self.input_text.get("1.0", "end").strip()
-        key = self.key_entry.get()
-        algorithm = self.algorithm_menu.get()
-        algo = self.algorithms.get(algorithm)
+    def render_key_input(self, algorithm):
+        for widget in self.key_dynamic.winfo_children():
+            widget.destroy()
 
-        if algo is None:
-            self.set_output("Algorithm not yet implemented")
-            return
+        if algorithm == "Hill":
+            self.render_hill_matrix_input()
 
-        try:
-            result = algo["encrypt"](text, key)
-            self.set_output(result)
-        except Exception as e:
-            self.set_output(f"Error: {str(e)}")
+        else:
+            self.key_entry = ctk.CTkEntry(
+                self.key_dynamic,
+                placeholder_text="Enter the encryption key",
+                corner_radius=10
+            )
+            self.key_entry.pack(fill="x")
 
-    def decrypt(self):
-        text = self.input_text.get("1.0", "end").strip()
-        key = self.key_entry.get()
-        algorithm = self.algorithm_menu.get()
-        algo = self.algorithms.get(algorithm)
+    def on_algorithm_change(self, choice):
+        self.render_key_input(choice)
 
-        if algo is None:
-            self.set_output("Algorithm not yet implemented")
-            return
+    def render_hill_matrix_input(self):
+        size_frame = ctk.CTkFrame(self.key_dynamic, fg_color="transparent")
+        size_frame.pack(fill="x", pady=5)
 
-        try:
-            result = algo["decrypt"](text, key)
-            self.set_output(result)
-        except Exception as e:
-            self.set_output(f"Error: {str(e)}")
+        ctk.CTkLabel(size_frame, text="Matrix Size:").pack(side="left")
 
-    def generate_key(self):
-        algorithm = self.algorithm_menu.get()
-        algo = self.algorithms.get(algorithm)
+        self.matrix_size = ctk.CTkOptionMenu(
+            size_frame,
+            values=[str(num) for num in list(range(2, 7))]
+        )
+        self.matrix_size.pack(side="left", padx=10)
 
-        if algo is None:
-            self.set_output("Algorithm not yet implemented")
-            return
+        generate_btn = ctk.CTkButton(
+            size_frame,
+            text="Generate Matrix",
+            command=self.generate_matrix_fields
+        )
+        generate_btn.pack(side="left", padx=10)
 
-        try:
-            key = algo["generate"]()
-            self.set_key_entry(key)
-        except Exception as e:
-            self.set_output(f"Error: {str(e)}")
+        self.matrix_container = ctk.CTkFrame(self.key_dynamic)
+        self.matrix_container.pack(pady=10, anchor="center")
+
+    def generate_matrix_fields(self):
+        for widget in self.matrix_container.winfo_children():
+            widget.destroy()
+
+        size = int(self.matrix_size.get())
+        self.matrix_entries = []
+
+        for i in range(size):
+            row_entries = []
+            for j in range(size):
+                entry = ctk.CTkEntry(self.matrix_container, width=60)
+                entry.grid(row=i, column=j, padx=5, pady=5)
+                row_entries.append(entry)
+            self.matrix_entries.append(row_entries)
+
+    def get_matrix_key(self):
+        matrix = []
+        for row in self.matrix_entries:
+            matrix.append([int(entry.get()) for entry in row])
+        return matrix
+
+    def set_matrix_key(self, matrix):
+        size = len(matrix)
+
+        if not hasattr(self, "matrix_entries") or len(self.matrix_entries) != size:
+            self.matrix_size.set(str(size))
+            self.generate_matrix_fields()
+
+        for i in range(size):
+            for j in range(size):
+                self.matrix_entries[i][j].delete(0, "end")
+                self.matrix_entries[i][j].insert(0, str(matrix[i][j]))

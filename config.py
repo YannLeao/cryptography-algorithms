@@ -9,21 +9,21 @@ ALGORITHMS = {
     "Caesar": {
         "encrypt": caesar_encrypt,
         "decrypt": caesar_decrypt,
-        "generate": caesar_generate
+        "generate_key": caesar_generate
     },
     "Mono-alphabetic": {
         "encrypt": mono_alphabetic_encrypt,
         "decrypt": mono_alphabetic_decrypt,
-        "generate": mono_alphabetic_generate
+        "generate_key": mono_alphabetic_generate
     },
     "Playfair": {
         "encrypt": playfair_encrypt,
         "decrypt": playfair_decrypt,
-        "generate": playfair_generate
+        "generate_key": playfair_generate
     },
     "Hill": {
         "encrypt": hill_encrypt,
         "decrypt": hill_decrypt,
-        "generate": hill_generate
+        "generate_key": hill_generate
     },
 }
