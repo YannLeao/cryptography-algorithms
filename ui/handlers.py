@@ -1,4 +1,4 @@
-def encrypt(app):
+def process(app, mode):
     text = app.input_text.get("1.0", "end").strip()
     algorithm = app.algorithm_menu.get()
     algo = app.algorithms.get(algorithm)
@@ -9,26 +9,7 @@ def encrypt(app):
         return
 
     try:
-        result = algo["encrypt"](text, key)
-        app.set_output(result)
-        app.run_analysis()
-
-    except Exception as e:
-        app.set_output(f"Error: {str(e)}")
-
-
-def decrypt(app):
-    text = app.input_text.get("1.0", "end").strip()
-    algorithm = app.algorithm_menu.get()
-    algo = app.algorithms.get(algorithm)
-    key = app.key_entry.get() if algorithm != "Hill" else app.get_matrix_key()
-
-    if algo is None:
-        app.set_output("Algorithm not yet implemented")
-        return
-
-    try:
-        result = algo["decrypt"](text, key)
+        result = algo[mode](text, key)
         app.set_output(result)
         app.run_analysis()
 
@@ -55,3 +36,11 @@ def generate_key(app):
 
     except Exception as e:
         app.set_output(f"Error: {str(e)}")
+
+
+def swap_text(self):
+    output_text = self.output_text.get("1.0", "end").strip()
+
+    self.input_text.delete("1.0", "end")
+    self.input_text.insert("1.0", output_text)
+    self.set_output("")

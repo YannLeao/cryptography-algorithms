@@ -2,7 +2,7 @@ import customtkinter as ctk
 
 from config import ALGORITHMS, THEME_PATH
 from ui.charts import FrequencyChart
-from ui.handlers import encrypt, decrypt, generate_key
+from ui.handlers import process, generate_key, swap_text
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme(str(THEME_PATH))
@@ -19,28 +19,6 @@ class CryptoApp(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.right_panel = ctk.CTkFrame(self, fg_color="transparent")
-        self.right_panel.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
-        self.right_panel.grid_columnconfigure(0, weight=1)
-        self.right_panel.grid_rowconfigure(0, weight=1)
-        self.right_panel.grid_rowconfigure(1, weight=1)
-        analysis_title = ctk.CTkLabel(
-            self.right_panel,
-            text="Frequency Analysis",
-            font=ctk.CTkFont(size=24, weight="bold")
-        )
-        analysis_title.grid(row=0, column=0, pady=(10, 20))
-
-        chart_in_container = ctk.CTkFrame(self.right_panel, fg_color="transparent")
-        chart_in_container.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
-        chart_in_container.grid_rowconfigure(0, weight=1)
-        chart_in_container.grid_columnconfigure(0, weight=1)
-
-        chart_out_container = ctk.CTkFrame(self.right_panel, fg_color="transparent")
-        chart_out_container.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
-        chart_out_container.grid_rowconfigure(0, weight=1)
-        chart_out_container.grid_columnconfigure(0, weight=1)
-
         self.algorithm_menu = None
         self.input_text = None
         self.key_frame = None
@@ -50,26 +28,28 @@ class CryptoApp(ctk.CTk):
         self.key_entry = None
         self.key_dynamic = None
         self.matrix_entries = None
+        self.right_panel = None
+        self.chart_out = None
+        self.chart_in = None
 
         self.algorithms = ALGORITHMS
 
-        self.create_widgets()
-        self.chart_in = FrequencyChart(chart_in_container, "Input char")
-        self.chart_out = FrequencyChart(chart_out_container, "Output char")
+        self.crypto_panel()
+        self.analysis_panel()
 
-    def create_widgets(self):
+    def crypto_panel(self):
         # Main frame
-        main_frame = ctk.CTkScrollableFrame(
+        left_panel = ctk.CTkScrollableFrame(
             self,
             corner_radius=15,
             height=550
         )
-        main_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
-        main_frame.grid_columnconfigure(0, weight=1)
+        left_panel.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+        left_panel.grid_columnconfigure(0, weight=1)
 
         # Title
         title = ctk.CTkLabel(
-            main_frame,
+            left_panel,
             text="Classical Cryptography",
             font=ctk.CTkFont(size=24, weight="bold")
         )
@@ -77,14 +57,14 @@ class CryptoApp(ctk.CTk):
 
         # Algorithm selection
         self.algorithm_menu = ctk.CTkOptionMenu(
-            main_frame,
+            left_panel,
             values=list(ALGORITHMS.keys())
         )
         self.algorithm_menu.grid(row=1, column=0, pady=10)
         self.algorithm_menu.configure(command=self.on_algorithm_change)
 
         # Input text field
-        input_container = ctk.CTkFrame(main_frame, fg_color="transparent")
+        input_container = ctk.CTkFrame(left_panel, fg_color="transparent")
         input_container.grid(row=2, column=0, sticky="ew", padx=10)
         input_container.grid_columnconfigure(0, weight=1)
 
@@ -105,7 +85,7 @@ class CryptoApp(ctk.CTk):
         self.input_text.grid(row=1, column=0, sticky="ew")
 
         # Key field
-        self.key_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        self.key_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
         self.key_frame.grid(row=4, column=0, sticky="ew", padx=10, pady=(10, 5))
         self.key_frame.grid_columnconfigure(0, weight=1)
 
@@ -131,20 +111,20 @@ class CryptoApp(ctk.CTk):
         generate_btn.grid(row=2, column=0, pady=10)
 
         # Buttons
-        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        button_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
         button_frame.grid(row=5, column=0, pady=10)
 
-        encrypt_btn = ctk.CTkButton(button_frame, text="Encrypt", command=lambda: encrypt(self))
+        encrypt_btn = ctk.CTkButton(button_frame, text="Encrypt", command=lambda: process(self, "encrypt"))
         encrypt_btn.grid(row=0, column=0, padx=10)
 
-        decrypt_btn = ctk.CTkButton(button_frame, text="Decrypt", command=lambda: decrypt(self))
+        decrypt_btn = ctk.CTkButton(button_frame, text="Decrypt", command=lambda: process(self, "decrypt"))
         decrypt_btn.grid(row=0, column=1, padx=10)
 
-        swap_btn = ctk.CTkButton(button_frame, text="⇄", width=40, command=self.swap_text)
+        swap_btn = ctk.CTkButton(button_frame, text="⇄", width=40, command=lambda: swap_text(self))
         swap_btn.grid(row=0, column=2, padx=5)
 
         # Output text field
-        output_container = ctk.CTkFrame(main_frame, fg_color="transparent")
+        output_container = ctk.CTkFrame(left_panel, fg_color="transparent")
         output_container.grid(row=6, column=0, sticky="ew", padx=10, pady=(10, 0))
         output_container.grid_columnconfigure(0, weight=1)
 
@@ -165,6 +145,36 @@ class CryptoApp(ctk.CTk):
         )
         self.output_text.grid(row=1, column=0, sticky="ew")
 
+    def analysis_panel(self):
+        self.right_panel = ctk.CTkScrollableFrame(
+            self,
+            corner_radius=15,
+            height=550
+        )
+        self.right_panel.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
+        self.right_panel.grid_columnconfigure(0, weight=1)
+        self.right_panel.grid_rowconfigure(0, weight=1)
+        self.right_panel.grid_rowconfigure(1, weight=1)
+        analysis_title = ctk.CTkLabel(
+            self.right_panel,
+            text="Frequency Analysis",
+            font=ctk.CTkFont(size=24, weight="bold")
+        )
+        analysis_title.grid(row=0, column=0, pady=(10, 20))
+
+        chart_in_container = ctk.CTkFrame(self.right_panel, fg_color="transparent")
+        chart_in_container.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        chart_in_container.grid_rowconfigure(0, weight=1)
+        chart_in_container.grid_columnconfigure(0, weight=1)
+
+        chart_out_container = ctk.CTkFrame(self.right_panel, fg_color="transparent")
+        chart_out_container.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
+        chart_out_container.grid_rowconfigure(0, weight=1)
+        chart_out_container.grid_columnconfigure(0, weight=1)
+
+        self.chart_in = FrequencyChart(chart_in_container, "Input char")
+        self.chart_out = FrequencyChart(chart_out_container, "Output char")
+
     def set_output(self, text):
         self.output_text.configure(state="normal")
         self.output_text.delete("1.0", "end")
@@ -174,13 +184,6 @@ class CryptoApp(ctk.CTk):
     def set_key_entry(self, key):
         self.key_entry.delete(0, "end")
         self.key_entry.insert(0, str(key))
-
-    def swap_text(self):
-        output_text = self.output_text.get("1.0", "end").strip()
-
-        self.input_text.delete("1.0", "end")
-        self.input_text.insert("1.0", output_text)
-        self.set_output("")
 
     def render_key_input(self, algorithm):
         for widget in self.key_dynamic.winfo_children():

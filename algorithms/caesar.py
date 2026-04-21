@@ -2,7 +2,7 @@ import random
 
 
 def encrypt(text, key):
-    shift  =  int(key)
+    shift = int(key)
     result = ""
 
     for char in text:
@@ -13,8 +13,10 @@ def encrypt(text, key):
             result += char
     return result
 
+
 def decrypt(text, key):
     return encrypt(text, -int(key))
+
 
 def generate_key():
     return random.randint(0, 25)
