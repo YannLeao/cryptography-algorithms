@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from algorithms.caesar import encrypt as caesar_encrypt, decrypt as caesar_decrypt, generate_key as caesar_generate
@@ -33,7 +34,19 @@ ALGORITHMS = {
 }
 
 # UI/UX
-THEME_PATH = BASE_DIR / "ui" / "theme.json"
+THEME_PATH = BASE_DIR / "ui" / "theme" / "theme.json"
+FONT_PATH = BASE_DIR / "ui" / "font" / "JetBrainsMono-Regular.ttf"
 BACKGROUND_COLOR = "#0E130E"
 BARS_COLOR = "#00E68A"
 TEXT_COLOR = "#9EFFC8"
+
+
+def load_custom_font():
+    if os.name == 'nt':
+        try:
+            from ctypes import windll
+            path_str = str(FONT_PATH.absolute())
+            windll.gdi32.AddFontResourceExW(path_str, 0x10, 0)
+
+        except Exception as e:
+            print(f"Erro ao carregar fonte: {e}")

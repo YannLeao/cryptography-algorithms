@@ -1,11 +1,12 @@
 import customtkinter as ctk
 
-from config import ALGORITHMS, THEME_PATH
+from config import ALGORITHMS, THEME_PATH, load_custom_font
 from ui.charts import FrequencyChart
 from ui.handlers import process, generate_key, swap_text
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme(str(THEME_PATH))
+load_custom_font()
 
 
 class CryptoApp(ctk.CTk):
