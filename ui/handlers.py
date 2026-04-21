@@ -11,6 +11,8 @@ def encrypt(app):
     try:
         result = algo["encrypt"](text, key)
         app.set_output(result)
+        app.run_analysis()
+
     except Exception as e:
         app.set_output(f"Error: {str(e)}")
 
@@ -28,6 +30,8 @@ def decrypt(app):
     try:
         result = algo["decrypt"](text, key)
         app.set_output(result)
+        app.run_analysis()
+
     except Exception as e:
         app.set_output(f"Error: {str(e)}")
 
